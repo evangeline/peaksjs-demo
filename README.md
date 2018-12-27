@@ -15,6 +15,7 @@ In the production mode, we will have only 1 server running. All the client side 
 
 ## Quick Start
 
+### Running locally
 ```bash
 # Clone the repository
 git clone https://github.com/crsandeep/simple-react-full-stack
@@ -31,6 +32,15 @@ yarn build (or npm run build)
 # Start production server
 yarn start (or npm start)
 ```
+
+### Docker
+Alternatively, this is available on Docker which you can run with this command in your terminal:
+
+```bash
+docker run -p 8000:8080 evangelinecheng/peaksjs-demo
+```
+
+Open [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
 
 ## Thoughts during the process
 
