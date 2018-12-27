@@ -7,6 +7,7 @@ RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
 RUN apt-get install nodejs -yq
 RUN apt-get install build-essential -yq
 
+# Install audiowaveform
 RUN apt-get install software-properties-common -yq
 RUN add-apt-repository ppa:chris-needham/ppa
 RUN apt-get install audiowaveform -yq
