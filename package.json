@@ -1,5 +1,5 @@
 {
-  "name": "simple-react-full-stack",
+  "name": "peaksjs-demo",
   "version": "1.0.0",
   "description": "Boilerplate to build a full stack web application using React, Node.js, Express and Webpack.",
   "main": "src/server/index.js",
@@ -15,8 +15,11 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "express": "^4.16.3",
+    "multer": "^1.4.1",
+    "peaks.js": "^0.9.13",
     "react": "^16.5.2",
-    "react-dom": "^16.5.2"
+    "react-dom": "^16.5.2",
+    "react-dropzone": "^8.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -27,6 +30,7 @@
     "babel-loader": "^8.0.0",
     "clean-webpack-plugin": "^0.1.19",
     "concurrently": "^4.0.0",
+    "copy-webpack-plugin": "^4.6.0",
     "css-loader": "^1.0.0",
     "eslint": "^5.0.0",
     "eslint-config-airbnb": "^17.0.0",

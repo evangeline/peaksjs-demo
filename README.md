@@ -1,32 +1,9 @@
-# simple-react-full-stack
-
-[![Build Status](https://travis-ci.org/crsandeep/simple-react-full-stack.svg?branch=master)](https://travis-ci.org/crsandeep/simple-react-full-stack)
-[![Greenkeeper badge](https://badges.greenkeeper.io/crsandeep/simple-react-full-stack.svg)](https://greenkeeper.io/)
-
-This is a boilerplate to build a full stack web application using React, Node.js, Express and Webpack. It is also configured with webpack-dev-server, eslint, prettier and babel.
-
-- [simple-react-full-stack](#simple-react-full-stack)
-  - [Introduction](#introduction)
-    - [Development mode](#development-mode)
-    - [Production mode](#production-mode)
-  - [Quick Start](#quick-start)
-  - [Documentation](#documentation)
-    - [Folder Structure](#folder-structure)
-    - [Babel](#babel)
-    - [ESLint](#eslint)
-    - [Webpack](#webpack)
-    - [Webpack dev server](#webpack-dev-server)
-    - [Nodemon](#nodemon)
-    - [Express](#express)
-    - [Concurrently](#concurrently)
-    - [VSCode + ESLint + Prettier](#vscode--eslint--prettier)
-      - [Installation guide](#installation-guide)
+# Peaksjs Demo
 
 ## Introduction
 
-[Create React App](https://github.com/facebook/create-react-app) is a quick way to get started with React development and it requires no build configuration. But it completely hides the build config which makes it difficult to extend. It also requires some additional work to integrate it with an existing Node.js/Express backend application.
-
-This is a simple full stack [React](https://reactjs.org/) application with a [Node.js](https://nodejs.org/en/) and [Express](https://expressjs.com/) backend. Client side code is written in React and the backend API is written using Express. This application is configured with [Airbnb's ESLint rules](https://github.com/airbnb/javascript) and formatted through [prettier](https://prettier.io/).
+This is a simple app which allows an user to upload a single .wav file, which gets converted into JSON and then rendered as a waveform.
+The user can play and pause at any point of the waveform, zoom in or out of the waveform and jump into different timestamps.
 
 ### Development mode
 
@@ -48,9 +25,6 @@ cd simple-react-full-stack
 # Install dependencies
 yarn (or npm install)
 
-# Start development server
-yarn dev (or npm run dev)
-
 # Build for production
 yarn build (or npm run build)
 
@@ -58,190 +32,58 @@ yarn build (or npm run build)
 yarn start (or npm start)
 ```
 
-## Documentation
+## Thoughts during the process
 
-### Folder Structure
+1. Figuring out where to best store state in React. I read up some best practices online and it seems like everyone has an opinion. I tried to keep as much state in the parent component as possible,
+and keep most components as functional components. Easier to keep track of the data flow and have a single source of truth. That said, I did keep the peaksjs state in the AudioChart component.
+I wanted to only initialise the Peaksjs instance when the AudioChart component is mounted, and it felt more appropriate to keep all things peaksjs in that component.
 
-All the source code will be inside **src** directory. Inside src, there is client and server directory. All the frontend code (react, css, js and any other assets) will be in client directory. Backend Node.js/Express code will be in the server directory.
+2. Frontend validation. I did the frontend validation in the React Dropzone itself or using HTML5 form validation, rather than building custom frontend validation. It seemed both simpler and more fool-proof.
+The Dropzone checks if the correct file format is being dragged in, and only allows for a single file upload. 
+The timestamp has to be in seconds, so I've set input box has a type `number` and step `0.01` to check if users are keying in numbers, up to 2 decimal places.
 
-### Babel
+3. Rendering waveforms of different sizes effectively in peaksjs. I noticed files which are very small would break Peaksjs as the default zoom level is larger than the entirety of the file. 
+I've set different zoom levels to accommodate different file sizes, and the user can toggle between each of them.
 
-[Babel](https://babeljs.io/) helps us to write code in the latest version of JavaScript. If an environment does not support certain features natively, Babel will help us to compile those features down to a supported version. It also helps us to convert JSX to Javascript.
+## Improvements
 
-[.babelrc file](https://babeljs.io/docs/usage/babelrc/) is used describe the configurations required for Babel. Below is the .babelrc file which I am using.
+1. Storing files in S3. The master branch stores both the wav and json files locally, which wouldn't scale well. The S3 branch is my work in progress on storing the files in a publicly accessible bucket. 
+The files seem to be stored fine, but I'm still working out the bucket permissions and how to retrieve them in the frontend via the static url. Also need a try catch when uploading in case request fails.
+This would be a pretty important priority, but it also seemed that this task was focusing more on the frontend, which was why I started on setting up s3 late.
 
-```javascript
-{
-    "presets": ["env", "react"]
-}
-```
+2. More testing. Everything has been tested manually because setting up UI tests for file upload and waveform rendering seemed quite involved + low additional value over testing manually given how simple the feature is. 
+The enzyme library looks decent? Or maybe I can just mock it.
 
-Babel requires plugins to do the transformation. Presets are the set of plugins defined by Babel. Preset **env** allows to use babel-preset-es2015, babel-preset-es2016, and babel-preset-es2017 and it will transform them to ES5. Preset **react** allows us to use JSX syntax and it will transform JSX to Javascript.
+3. Allowing the user to directly access waveform in the future. What if the user wants to access the same waveform, without needing to upload a file again? I would move the converted file name into the Location header
+of the POST response, the frontend uses the URL to retrieve the waveform from S3. I'll probably need to give each file an UUID for all files to be uniquely named and retrievable.
 
-### ESLint
+4. Better setup for deployment into production. I started with a react-express boilerplate, and the proxy is set up mainly for local development. Will need to think of how to get this app on something like NGINX,
+especially if we expect loads of traffic. Also the boilerplate came with two separate package.jsons for client and server dependencies, feels kinda odd but I rolled with it for this project. Might want to change in the future.
 
-[ESLint](https://eslint.org/) is a pluggable and configurable linter tool for identifying and reporting on patterns in JavaScript.
+5. Error messages for users. If any requests fails, it currently sends back a 400 with whatever error that's been caught in a single try catch. I would break the try catches down further, send user-readable error messages and
+ build a component that renders the error message.
 
-[.eslintrc.json file](<(https://eslint.org/docs/user-guide/configuring)>) (alternatively configurations can we written in Javascript or YAML as well) is used describe the configurations required for ESLint. Below is the .eslintrc.json file which I am using.
+## The Challenge
 
-```javascript
-{
-  "extends": ["airbnb"],
-  "env": {
-    "browser": true,
-    "node": true
-  },
-  "rules": {
-    "no-console": "off",
-    "comma-dangle": "off",
-    "react/jsx-filename-extension": "off"
-  }
-}
-```
+At Papercup, we are building a translation platform for video creators. We pay alot of attention to design and UX in order to make it easier for creators to translate their videos into the world's languages.
 
-[I am using Airbnb's Javascript Style Guide](https://github.com/airbnb/javascript) which is used by many JavaScript developers worldwide. Since we are going to write both client (browser) and server side (Node.js) code, I am setting the **env** to browser and node. Optionally, we can override the Airbnb's configurations to suit our needs. I have turned off [**no-console**](https://eslint.org/docs/rules/no-console), [**comma-dangle**](https://eslint.org/docs/rules/comma-dangle) and [**react/jsx-filename-extension**](https://github.com/yannickcr/eslint-plugin-react/blob/master/docs/rules/jsx-filename-extension.md) rules.
+The user should to be able to view the audio data. Your task is to build an app to display the waveform of a given piece of audio.
 
-### Webpack
+The user needs to be able to do the following actions in the user interface:
 
-[Webpack](https://webpack.js.org/) is a module bundler. Its main purpose is to bundle JavaScript files for usage in a browser.
+1. Upload a piece of audio
+2. Use Peak.JS to display the waveform of the audio, with functionalities such as play, pause and jump to different timestamps.
 
-[webpack.config.js](https://webpack.js.org/configuration/) file is used to describe the configurations required for webpack. Below is the webpack.config.js file which I am using.
+#### Useful notes and links
 
-```javascript
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CleanWebpackPlugin = require("clean-webpack-plugin");
+ - Can assume that all audio files will only be in wav formats, and therefore no need to worry about functions to convert from mp3 to wav, for example.
+ - PeakJS may only take in links to audio files, and not blobs of files. It also requires audiowaveform to be installed through brew or apt-get. It's a bit peculiar to work with, so do let Jiameng know of any questions or problems that you have!
 
-const outputDirectory = "dist";
+These links may be helpful:
+- [Create React App](https://github.com/facebook/create-react-app)
+- [Peaks.js](https://github.com/bbc/peaks.js)
+- [AirBnB style guide](https://github.com/airbnb/javascript)
 
-module.exports = {
-  entry: ["babel-polyfill", "./src/client/index.js"],
-  output: {
-    path: path.join(__dirname, outputDirectory),
-    filename: "bundle.js"
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      },
-      {
-        test: /\.css$/,
-        use: ["style-loader", "css-loader"]
-      },
-      {
-        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-        loader: "url-loader?limit=100000"
-      }
-    ]
-  },
-  devServer: {
-    port: 3000,
-    open: true,
-    proxy: {
-      "/api": "http://localhost:8080"
-    }
-  },
-  plugins: [
-    new CleanWebpackPlugin([outputDirectory]),
-    new HtmlWebpackPlugin({
-      template: "./public/index.html",
-      favicon: "./public/favicon.ico"
-    })
-  ]
-};
-```
+## Credits
 
-1.  **entry:** entry: ./src/client/index.js is where the application starts executing and webpack starts bundling.
-    Note: babel-polyfill is added to support async/await. Read more [here](https://babeljs.io/docs/en/babel-polyfill#usage-in-node-browserify-webpack).
-2.  **output path and filename:** the target directory and the filename for the bundled output
-3.  **module loaders:** Module loaders are transformations that are applied on the source code of a module. We pass all the js file through [babel-loader](https://github.com/babel/babel-loader) to transform JSX to Javascript. CSS files are passed through [css-loaders](https://github.com/webpack-contrib/css-loader) and [style-loaders](https://github.com/webpack-contrib/style-loader) to load and bundle CSS files. Fonts and images are loaded through url-loader.
-4.  **Dev Server:** Configurations for the webpack-dev-server which will be described in coming section.
-5.  **plugins:** [clean-webpack-plugin](https://github.com/johnagan/clean-webpack-plugin) is a webpack plugin to remove the build folder(s) before building. [html-webpack-plugin](https://github.com/jantimon/html-webpack-plugin) simplifies creation of HTML files to serve your webpack bundles. It loads the template (public/index.html) and injects the output bundle.
-
-### Webpack dev server
-
-[Webpack dev server](https://webpack.js.org/configuration/dev-server/) is used along with webpack. It provides a development server that provides live reloading for the client side code. This should be used for development only.
-
-The devServer section of webpack.config.js contains the configuration required to run webpack-dev-server which is given below.
-
-```javascript
-devServer: {
-    port: 3000,
-    open: true,
-    proxy: {
-        "/api": "http://localhost:8080"
-    }
-}
-```
-
-[**Port**](https://webpack.js.org/configuration/dev-server/#devserver-port) specifies the Webpack dev server to listen on this particular port (3000 in this case). When [**open**](https://webpack.js.org/configuration/dev-server/#devserver-open) is set to true, it will automatically open the home page on startup. [Proxying](https://webpack.js.org/configuration/dev-server/#devserver-proxy) URLs can be useful when we have a separate API backend development server and we want to send API requests on the same domain. In our case, we have a Node.js/Express backend where we want to send the API requests to.
-
-### Nodemon
-
-Nodemon is a utility that will monitor for any changes in the server source code and it automatically restart the server. This is used in development only.
-
-nodemon.json file is used to describe the configurations for Nodemon. Below is the nodemon.json file which I am using.
-
-```javascript
-{
-  "watch": ["src/server/"]
-}
-```
-
-Here, we tell nodemon to watch the files in the directory src/server where out server side code resides. Nodemon will restart the node server whenever a file under src/server directory is modified.
-
-### Express
-
-Express is a web application framework for Node.js. It is used to build our backend API's.
-
-src/server/index.js is the entry point to the server application. Below is the src/server/index.js file
-
-```javascript
-const express = require("express");
-const os = require("os");
-
-const app = express();
-
-app.use(express.static("dist"));
-app.get("/api/getUsername", (req, res) =>
-  res.send({ username: os.userInfo().username })
-);
-app.listen(8080, () => console.log("Listening on port 8080!"));
-```
-
-This starts a server and listens on port 8080 for connections. The app responds with `{username: <username>}` for requests to the URL (/api/getUsername). It is also configured to serve the static files from **dist** directory.
-
-### Concurrently
-
-[Concurrently](https://github.com/kimmobrunfeldt/concurrently) is used to run multiple commands concurrently. I am using it to run the webpack dev server and the backend node server concurrently in the development environment. Below are the npm/yarn script commands used.
-
-```javascript
-"client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
-"server": "nodemon src/server/index.js",
-"dev": "concurrently \"npm run server\" \"npm run client\""
-```
-
-### VSCode + ESLint + Prettier
-
-[VSCode](https://code.visualstudio.com/) is a lightweight but powerful source code editor. [ESLint](https://eslint.org/) takes care of the code-quality. [Prettier](https://prettier.io/) takes care of all the formatting.
-
-#### Installation guide
-
-1.  Install [VSCode](https://code.visualstudio.com/)
-2.  Install [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-3.  Install [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-4.  Modify the VSCode user settings to add below configuration
-
-    ```javascript
-    "eslint.alwaysShowStatus": true,
-    "eslint.autoFixOnSave": true,
-    "editor.formatOnSave": true,
-    "prettier.eslintIntegration": true
-    ```
-
-Above, we have modified editor configurations. Alternatively, this can be configured at the project level by following [this article](https://medium.com/@netczuk/your-last-eslint-config-9e35bace2f99).
+This application is created from the [boilerplate](https://github.com/crsandeep/simple-react-full-stack) here.
